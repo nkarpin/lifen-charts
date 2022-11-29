@@ -39,12 +39,19 @@ spec:
             subPath: squid.conf
           - name: cache
             mountPath: /var/cache/squid
+          - name: ssl-db
+            mountPath: /var/lib/sslsq
+          - name: tls-secret
+            mountPath: /tmp/tls
           command:
             - /bin/sh
             - -c
           args:
             - |
               set -e
+              /usr/lib/squid/security_file_certgen -c -s /var/lib/sslsq/ssl_db -M 4MB
+              chown -R squid.squid /var/lib/sslsq/ssl_db
+              chmod 770 /var/lib/sslsq/ssl_db
               chown -R squid.squid /var/cache/squid
               chmod 770 /var/cache/squid
               squid -z --foreground 2>&1
@@ -62,6 +69,10 @@ spec:
             subPath: squid.conf
           - name: cache
             mountPath: /var/cache/squid
+          - name: ssl-db
+            mountPath: /var/lib/sslsq
+          - name: tls-secret
+            mountPath: /tmp/tls
         {{- if .Values.configSecret }}
           - name: config-secret
             mountPath: /etc/squid/config
@@ -114,11 +125,16 @@ spec:
           name: {{ template "squid.fullname" . }}-conf
       - emptyDir: {}
         name: cache
+      - emptyDir: {}
+        name: ssl-db
     {{- if .Values.configSecret }}
       - name: config-secret
         secret:
           secretName: {{ .Values.configSecret }}
     {{- end }}
+      - name: tls-secret
+        secret:
+          secretName: squid-tls-public
     {{- with .Values.nodeSelector }}
       nodeSelector:
 {{ toYaml . | indent 8 }}

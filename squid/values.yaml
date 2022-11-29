@@ -63,7 +63,11 @@ config: |
   http_access deny manager
 
   # Squid normally listens to port 3128
-  http_port 3128
+  sslcrtd_program /usr/lib/squid/security_file_certgen -s /var/lib/sslsq/ssl_db -M 4MB
+
+  http_port 3128 ssl-bump  \
+  cert=/tmp/tls/ca.crt \
+  generate-host-certificates=on dynamic_cert_mem_cache_size=4MB
 
   # Uncomment and adjust the following to add a disk cache directory.
   #cache_dir ufs /var/cache/squid 100 16 256
@@ -81,6 +85,7 @@ config: |
 
   # Do not display squid version
   httpd_suppress_version_string on
+  ssl_bump bump all
 
 # Optionally specify a secret whose contents will be mounted into /etc/squid/config.
 # configSecret: config-example
